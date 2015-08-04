@@ -22,8 +22,8 @@ classdef ImagingSession < handle
         function ImagingSessionObj = ImagingSession(varargin)
             
             % Parse arguments
-            [experimentDir, sessionDataIn] = ...
-                utils.parse_opt_args({[], ''}, varargin);
+            [experimentDir, sessionDataIn, refImg] = ...
+                utils.parse_opt_args({[], '', []}, varargin);
              
             % Work out the current recursion depth
             if utils.is_deeper_than('ImagingSession.ImagingSession')
@@ -45,7 +45,7 @@ classdef ImagingSession < handle
                     datestr(sessionDataIn{1,'Date'} + ...
                     dateOffset, 'dd-mmm-yy');
                 
-                generate_data(ImagingSessionObj, experimentDir)
+                generate_data(ImagingSessionObj, experimentDir, refImg)
                 return
             end
             
@@ -65,26 +65,123 @@ classdef ImagingSession < handle
                 
             end
             
-            generate_data(ImagingSessionObj, experimentDir)
+            generate_data(ImagingSessionObj, experimentDir, refImg)
             
         end
         
         % -------------------------------------------------------------- %
-        
+                
         function process(self, varargin)
             
-           if ~isscalar(self)
-                arrayfun(@process, self, 'UniformOutput', false);
-                return
-           end
-           
-           self.imaging.data.process(); 
+            % Parse arguments
+            [nBaseSessions, useParallel] = ...
+                utils.parse_opt_args({1, 1}, varargin);           
+            
+            % Find ROIs for the baseline sessions
+            roiMask = [];
+            for iBase = 1:nBaseSessions
+                for iSpot = 1:numel(self(iBase).imaging)
+                    self(iBase).imaging(iSpot).data.process(...
+                        useParallel, 'find');
+                    
+                    % Attempt to combine the masks into a 3d array
+                    nChilds = self(iBase).imaging(iSpot).data.nChildren;
+                    
+                    for iChild = 1:nChilds
+                        nScans = numel(self(iBase).imaging(iSpot).data...
+                            .children{iChild});
+                        for iScan = 1:nScans
+                            roiMask(:,:,end+1) = ...
+                            any(self(iBase).imaging(iSpot).data.children...
+                            {iChild}(iScan).calcFindROIs.get_roiMask(), 3);
+                        end
+                    end
+                end
+            end
+            
+            baselineRoiMask = any(roiMask, 3);
+            
+            nSessions = numel(self);
+            for iSession = nBaseSessions+1:nSessions
+                 
+                
+            end
             
         end
         
         % -------------------------------------------------------------- %
         
-        output_data(self, varargin)
+        function sessionTable = output_data(self, varargin)
+            
+            sessionTable = table();
+            numSpots = numel(self.imaging);
+            for iSpot = 1:numSpots
+                spotName = self.imaging(iSpot).spotID;
+                spotTable = table();
+                
+                numChilds = self.imaging(iSpot).data.nChildren;
+                for iChild = 1:numChilds
+                    childTable = table();
+                    childName = self.imaging(iSpot).data.children{iChild}(1)...
+                        .name;
+                    
+                    numScans = numel(self.imaging(iSpot).data.children{iChild});
+                    for iScan = 1:numScans
+                        scanTable = table();
+                        scanName = sprintf('Trial%02d', iScan);
+                        tempData = self.imaging(iSpot).data.children{iChild}(iScan)...
+                            .calcMeasureROIs.data.peakDataSort;
+                        
+                        % Verify that scan was already processed
+                        scanState = self.imaging(iSpot).data.children{iChild}(iScan).state;
+                        if strcmpi(scanState, 'raw')
+                            warning('ImagingSession:output_data:notProcessed', ...
+                                'Please process scans first');
+                        end
+                        
+                        if isempty(tempData)
+                            continue
+                        end
+                        
+                        partTable = table();
+                        numROIs = numel(tempData);
+                        for iROI = 1:numROIs
+                            roiTable = table();
+                            roiName = sprintf('ROI%03d', iROI);
+                            if ~isempty(tempData{iROI})
+                                roiTable = struct2table(tempData{iROI});
+                                ROI = repmat({roiName},size(roiTable,1),1);
+                                roiCol = table(ROI);
+                                roiTable = [roiCol roiTable];
+                                
+                                partTable = [partTable; roiTable];
+                            end
+                        end
+                        
+                        Trial = repmat({scanName},size(partTable,1),1);
+                        trialCol = table(Trial);
+                        partTable = [trialCol partTable];
+                        
+                        scanTable = [scanTable; partTable];
+                        
+                    end
+                    
+                    Condition = repmat({childName},size(childTable,1),1);
+                    conditionCol = table(Condition);
+                    childTable = [conditionCol childTable];
+                    
+                    spotTable = [childTable; scanTable];
+                end
+                
+                Spot = repmat({spotName},size(spotTable,1),1);
+                spotCol = table(Spot);
+                spotTable = [spotCol spotTable];
+                
+                sessionTable = [sessionTable; spotTable];
+                    
+            end
+            
+        end
         
         % -------------------------------------------------------------- %
         
@@ -97,10 +194,11 @@ classdef ImagingSession < handle
         function generate_data(self, varargin)
             
             % Parse arguments
-            [experimentDir] =  utils.parse_opt_args({''}, varargin);
+            [experimentDir, refImg] =  utils.parse_opt_args({'', []}, ...
+                varargin);
             
            if ~isscalar(self)
-               arrayfun(@(x) generate_data(x, experimentDir), self)
+               arrayfun(@(x) generate_data(x, varargin{:}), self)
                return
            end
            
@@ -108,13 +206,15 @@ classdef ImagingSession < handle
            
            for iSpot = 1:numel(spotIDs)
                
+               spotRefImg = refImg(:,:,iSpot);
+               
                currSpot = spotIDs{iSpot};
                tempDataIdx = strcmp(self.sessionData{:,'SpotIDs'},...
                    currSpot);
                tempData = self.sessionData(tempDataIdx, :);
                
                % Store SpotID
-               self.imaging.spotID = spotIDs{iSpot};
+               self.imaging(iSpot).spotID = spotIDs{iSpot};
                
                % Generate RawImg objects
                pattern = 'lowres*';
@@ -123,9 +223,11 @@ classdef ImagingSession < handle
                
                calibration = load(['D:\Code\Matlab\2p-img-analysis\', ...
                    'tests\res\calibration.mat']);
+               calibration = calibration.self;
                
                channels = struct('AstrocyteCytoCalcium', 1);
                configFindIn = ConfigFindROIsFLIKA();
+               configFindIn.discardBorderROIs = true;
                configMeasureIn = ConfigMeasureROIsClsfy();
                configCSIn = ConfigCellScan(configFindIn, configMeasureIn);
                
@@ -136,15 +238,17 @@ classdef ImagingSession < handle
                    %refImgPath = fullfile(paths{i}, {refImgList.name});
                    
                    tempImgData = SCIM_Tif(filePaths, channels, ...
-                       calibration.self);
-                   tempImgData = tempImgData.motion_correct();
-                   tempCS{i} = CellScan('name', tempImgData, configCSIn, 1);
+                       calibration);
+                   tempImgData = tempImgData.motion_correct(...
+                      'refImg', spotRefImg);
+                   tempCS{i} = CellScan('name', tempImgData, ...
+                       configCSIn, 1);
                end
                
                tempImgGroup = ImgGroup('Conditions');
                tempImgGroup.add(tempCS);
                
-               self.imaging.data = tempImgGroup;
+               self.imaging(iSpot).data = tempImgGroup;
                
            end
             

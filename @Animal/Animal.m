@@ -6,6 +6,9 @@ classdef Animal < AnimalGroup
     
     properties
         
+        % info on processing state
+        state
+        
         % basic info on this animal
         animalName
         scoresheetPath
@@ -58,13 +61,16 @@ classdef Animal < AnimalGroup
         
         % -------------------------------------------------------------- %
         
-        function preprocess(self)
+        function preprocess(self, varargin)
             
             if ~isscalar(self)
-                arrayfun(@preprocess, self, 'UniformOutput', false);
+                arrayfun(@(x) preprocess(x, varargin{:}), self, 'UniformOutput', false);
                 return
             end
-
+            
+            % Parse arguments
+            [refImg] = utils.parse_opt_args({[]}, varargin);
+            
             % Read scoresheet
             [~, ~, data] = xlsread(self.scoresheetPath);
             
@@ -73,26 +79,43 @@ classdef Animal < AnimalGroup
             dataTable.Properties.VariableNames = data(1,1:23);
             self.scoresheetData = dataTable;
             
-            generate_sessions(self)
+            generate_sessions(self, refImg)
+            
+            self.state = 'preprocessed';
             
         end
             
-            % -------------------------------------------------------------- %
+        % -------------------------------------------------------------- %
         
-        function process(self)
+        function process(self, varargin)
             
             if ~isscalar(self)
-                arrayfun(@process, self, 'UniformOutput', false);
+                arrayfun(@(x) process(x, varargin{:}), self);
                 return
             end
 
-            self.sessionImg.process()
+            % Parse arguments
+            [nBaseSessions, useParallel] = ...
+                utils.parse_opt_args({1, true}, varargin);
+            
+            % Call Processing of ImgGroup
+            self.sessionImg.process(nBaseSessions, useParallel)
+            
+            % TODO: Add some verification here
+            self.state = 'processed';
             
         end
         
         % -------------------------------------------------------------- %
         
-        output_data(self, varargin)
+        function output_data(self, varargin)
+            
+           for iSession = 1:length(self.sessionImg)
+               
+               sessionTable = self.sessionImg(iSession).output_data;
+           end
+            
+        end
         
         % -------------------------------------------------------------- %
         
@@ -114,7 +137,7 @@ classdef Animal < AnimalGroup
     
     methods (Access=protected)
                 
-        function generate_sessions(self)
+        function generate_sessions(self, refImg)
             
             sessionDates = unique(self.scoresheetData.Date);
             nSessions = numel(sessionDates);
@@ -130,7 +153,7 @@ classdef Animal < AnimalGroup
             
             % Create ImagingSession from scoresheet    
             self.sessionImg = ImagingSession(self.experimentDir, ...
-                self.sessionData);
+                self.sessionData, refImg);
             
         end
         
