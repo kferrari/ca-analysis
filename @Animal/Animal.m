@@ -108,11 +108,15 @@ classdef Animal < AnimalGroup
         
         % -------------------------------------------------------------- %
         
-        function output_data(self, varargin)
-            
+        function dataTable = output_data(self, varargin)
+           dataTable = table(); 
            for iSession = 1:length(self.sessionImg)
                
                sessionTable = self.sessionImg(iSession).output_data;
+               sessionName = sprintf('Session%02d', iSession);
+               Session = repmat({sessionName}, size(sessionTable,1), 1);
+               sessionTable = [Session, sessionTable];
+               dataTable = [dataTable; sessionTable];
            end
             
         end
