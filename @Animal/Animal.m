@@ -72,7 +72,7 @@ classdef Animal < AnimalGroup
             [refImg] = utils.parse_opt_args({[]}, varargin);
             
             % Read scoresheet
-            [~, ~, data] = xlsread(self.scoresheetPath);
+            [~, ~, data] = xlsread(self.scoresheetPath, '', '', 'basic');
             
             % Convert into a matlab table
             dataTable = cell2table(data(2:end,1:23));
