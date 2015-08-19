@@ -99,7 +99,7 @@ for iAnimal = 1:numel(AnimalNames)
     Animal = repmat(AnimalNames(iAnimal), size(dataTable, 1), 1);
     animalCol = table(Animal);
     dataTable = [animalCol, dataTable];
-    newTable = [dataTable; newTable];
+    newTable = [newTable; dataTable];
     
 end
 
