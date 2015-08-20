@@ -183,12 +183,12 @@ classdef ImagingSession < handle
                         numROIs = numel(tempData);
                         for iROI = 1:numROIs
                             roiTable = table();
-                            roiName = [spotName, '_', sprintf('ROI%03d', iROI)];
+%                             roiName = [spotName, '_', sprintf('ROI%03d', iROI)];
                             if ~isempty(tempData{iROI})
                                 roiTable = struct2table(tempData{iROI});
-                                ROI = repmat({roiName},size(roiTable,1),1);
-                                roiCol = table(ROI);
-                                roiTable = [roiCol roiTable];
+%                                 ROI = repmat({roiName},size(roiTable,1),1);
+%                                 roiCol = table(ROI);
+%                                 roiTable = [roiCol roiTable];
                                 
                                 scanTable = [scanTable; roiTable];
                             end

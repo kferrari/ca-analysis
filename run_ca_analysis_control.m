@@ -47,7 +47,7 @@ useParallel = true;
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150811_ResultsTable.mat');
+        '150819_ResultsTable.mat');
     
     if exist(savepath, 'file')
         continue
@@ -103,5 +103,5 @@ for iAnimal = 1:numel(AnimalNames)
     
 end
 
-writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
-    'Table_control_animals_sessions.csv'), 'Delimiter', ',');
+% writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
+%     'Table_control_animals_sessions.csv'), 'Delimiter', ',');
