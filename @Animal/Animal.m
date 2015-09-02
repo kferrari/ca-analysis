@@ -69,7 +69,7 @@ classdef Animal < AnimalGroup
             end
             
             % Parse arguments
-            [refImg] = utils.parse_opt_args({[]}, varargin);
+            [refImg, useHandROI, ROIFolder] = utils.parse_opt_args({[]}, varargin);
             
             % Read scoresheet
             [~, ~, data] = xlsread(self.scoresheetPath, '', '', 'basic');
@@ -79,7 +79,7 @@ classdef Animal < AnimalGroup
             dataTable.Properties.VariableNames = data(1,1:23);
             self.scoresheetData = dataTable;
             
-            generate_sessions(self, refImg)
+            generate_sessions(self, refImg, useHandROI, ROIFolder)
             
             self.state = 'preprocessed';
             
@@ -95,11 +95,11 @@ classdef Animal < AnimalGroup
             end
 
             % Parse arguments
-            [nBaseSessions, useParallel] = ...
+            [nBaseSessions, useParallel, useHandROI] = ...
                 utils.parse_opt_args({1, true}, varargin);
             
             % Call Processing of ImgGroup
-            self.sessionImg.process(nBaseSessions, useParallel)
+            self.sessionImg.process(nBaseSessions, useParallel, useHandROI)
             
             % TODO: Add some verification here
             self.state = 'processed';
@@ -141,7 +141,7 @@ classdef Animal < AnimalGroup
     
     methods (Access=protected)
                 
-        function generate_sessions(self, refImg)
+        function generate_sessions(self, refImg, useHandROI, ROIFolder)
             
             sessionDates = unique(self.scoresheetData.Date);
             nSessions = numel(sessionDates);
@@ -157,7 +157,7 @@ classdef Animal < AnimalGroup
             
             % Create ImagingSession from scoresheet    
             self.sessionImg = ImagingSession(self.experimentDir, ...
-                self.sessionData, refImg);
+                self.sessionData, refImg, useHandROI, ROIFolder);
             
         end
         

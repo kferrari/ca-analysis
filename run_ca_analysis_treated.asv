@@ -101,7 +101,7 @@ dataTable = table();
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150828_ResultsTable_handclicked.mat');
+        '150821_ResultsTable_handclicked.mat');
     load(savepath)
     
     Animal = repmat(AnimalNames(iAnimal), size(dataTableTemp, 1), 1);

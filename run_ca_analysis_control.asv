@@ -3,6 +3,7 @@ ExperimentFolder = 'D:\Experiments\Astrocyte Calcium\Plasticity\';
 ZipFolder = 'P:\_Group\Projects\Astrocyte Calcium\Current Milestones\Astrocyte Calcium Imaging During Plasticity\Imaging Data\ImagesforClicking\Controls';
 
 AnimalNames = {
+    'GC07',...   %control
     'GC12',...    %control
     'GC14',...    %control
     'RG02',...      %control
@@ -11,6 +12,7 @@ AnimalNames = {
     };
 
 ScoreSheetNames = {
+    'GC07_Scoresheet_Imaging.xls',...
     'GC12_Scoresheet_Imaging.xls',...
     'GC14_Scoresheet_Imaging.xls',...
     'RG02_Scoresheet_Imaging.xls',...
@@ -19,6 +21,7 @@ ScoreSheetNames = {
     };
 
 spot1Path = {
+    'GC07\imaging\2014_05_05_baseline\spot1C1_TrimNostim\highres_spot1C1_nostim025.tif',...
     'GC12\imaging\14_08_04_baseline\spot1G_TrimNostim\highres_spot1G_nostim001.tif',...
     'GC14\imaging\14_08_05_baseline\spot1G_TrimNostim\highres_spot1G_nostim049.tif',...
     'RG02\imaging\14_05_06_baseline\spot1G_TrimNostim\highres_spot1G_nostim031.tif',...
@@ -27,6 +30,7 @@ spot1Path = {
     };
 
 spot2Path = {
+    'GC07\imaging\2014_05_05_baseline\spot2C1_TrimNostim\highres_spot2C1_nostim026.tif',...
     'GC12\imaging\14_08_04_baseline\spot2G_TrimNostim\highres_spot2G_nostim045.tif',...
     'GC14\imaging\14_08_05_baseline\spot2G_TrimNostim\highres_spot2G_nostim091.tif',...
     'RG02\imaging\14_05_06_baseline\spot2G_TrimNostim\highres_spot2G_nostim001.tif',...
@@ -45,7 +49,7 @@ useParallel = true;
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150902_ResultsTable_handclicked.mat');
+        '150828_ResultsTable_handclicked.mat');
     
     if exist(savepath, 'file')
         continue
@@ -65,8 +69,7 @@ for iAnimal = 1:numel(AnimalNames)
                 'treated', ...
                 AnimalNames(iAnimal), ...
                 ScoreSheetFolders(iAnimal));
-    
-    useHandROIs = true;
+            
     currROIFolder = fullfile(ZipFolder, AnimalNames{iAnimal});
     
     if ~strcmp(AnimalObj.state, 'preprocessed')
@@ -75,14 +78,14 @@ for iAnimal = 1:numel(AnimalNames)
     
     nBaseSessions = 3;
     
-    AnimalObj.process(nBaseSessions, useParallel, useHandROIs);
+    AnimalObj.process(nBaseSessions, useParallel);
     
     % Save data, because of RAM problem
     dataTableTemp = AnimalObj.output_data();
     save(savepath, 'dataTableTemp', '-v7.3');
     
     clearvars -except AnimalNames ExperimentFolder ScoreSheetNames spot1Path ...
-        spot2Path ScoreSheetFolders useParallel useHandROIs ZipFolder
+        spot2Path ScoreSheetFolders useParallel
 end
 
 newTable = table();
@@ -90,7 +93,7 @@ dataTable = table();
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150902_ResultsTable_handclicked.mat');
+        '150828_ResultsTable_handclicked.mat');
     load(savepath)
     
     Animal = repmat(AnimalNames(iAnimal), size(dataTableTemp, 1), 1);
@@ -100,5 +103,5 @@ for iAnimal = 1:numel(AnimalNames)
     
 end
 
-% writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
-%     'Table_control_animals_sessions_handclicked.csv'), 'Delimiter', ',');
+writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
+    'Table_control_animals_sessions_handclicked.csv'), 'Delimiter', ',');
