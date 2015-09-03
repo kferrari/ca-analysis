@@ -203,7 +203,7 @@ classdef ImagingSession < handle
 
                             if ~isempty(tempData{iROI})
                                 roidata = tempData{iROI};
-                                [roidata(:).Centroid] = deal(tempCentroids(iROI));
+                                roidata.Centroid = deal(tempCentroids(iROI));
                                 roiTable = struct2table(roidata); 
                                 scanTable = [scanTable; roiTable];
                             end

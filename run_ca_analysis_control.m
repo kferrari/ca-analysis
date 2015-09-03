@@ -54,7 +54,7 @@ for iAnimal = 1:numel(AnimalNames)
     [~,spot1] = scim.scim_openTif([ExperimentFolder, ...
         spot1Path{iAnimal}]);
     [~,spot2] = scim.scim_openTif([ExperimentFolder, ...
-        spot1Path{iAnimal}]);
+        spot2Path{iAnimal}]);
 
     spot1Ref = mean(squeeze(spot1(:,:,1,:)),3);
     spot2Ref = mean(squeeze(spot2(:,:,1,:)),3);
