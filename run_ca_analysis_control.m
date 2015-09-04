@@ -100,5 +100,5 @@ for iAnimal = 1:numel(AnimalNames)
     
 end
 
-% writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
-%     'Table_control_animals_sessions_handclicked.csv'), 'Delimiter', ',');
+writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
+    '150902_control_animals_sessions_handclicked.csv'), 'Delimiter', ',');
