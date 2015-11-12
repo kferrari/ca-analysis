@@ -48,7 +48,7 @@ useParallel = true;
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150828_ResultsTable_handclicked.mat');
+        '150909_ResultsTable_handclicked.mat');
     
     if exist(savepath, 'file')
         continue
@@ -88,7 +88,7 @@ for iAnimal = 1:numel(AnimalNames)
     
     % Save data, because of RAM problem
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150828_ResultsTable_handclicked.mat');
+        '150909_ResultsTable_handclicked.mat');
     dataTableTemp = AnimalObj.output_data();
     save(savepath, 'dataTableTemp', '-v7.3');
     
@@ -101,7 +101,7 @@ dataTable = table();
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '150828_ResultsTable_handclicked.mat');
+        '150909_ResultsTable_handclicked.mat');
     load(savepath)
     
     Animal = repmat(AnimalNames(iAnimal), size(dataTableTemp, 1), 1);
@@ -112,4 +112,4 @@ for iAnimal = 1:numel(AnimalNames)
 end
 
 writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
-    'Table_treated_animals_sessions_handclicked.csv'), 'Delimiter', ',');
+    '150909_treated_animals_sessions_handclicked.csv'), 'Delimiter', ',');

@@ -76,8 +76,8 @@ classdef ImagingSession < handle
         function process(self, varargin)
             
             % Parse arguments
-            [nBaseSessions, useParallel, useHandROI] = ...
-                utils.parse_opt_args({1, 1, 0}, varargin);
+            [nBaseSessions, useParallel, useHandROI, ExperimentFolder] = ...
+                utils.parse_opt_args({1, 1, 0, ''}, varargin);
             
             % Determine if hand-clicked ROIs are provided
             if ~useHandROI
@@ -135,6 +135,17 @@ classdef ImagingSession < handle
                                 self(iSession).imaging(iSpot).data.children...
                                     {iChild}(iScan).calcFindROIs = ...
                                     CalcFindROIsFLIKA(currConf, newCalcObj);
+                                
+                                % Save ROI mask
+                                maskFolder = fullfile(ExperimentFolder, ...
+                                    fileparts(char(self(iSession).sessionData{1,'RelativePath'})));
+                                maskName = ...
+                                    [self(iSession).imaging(iSpot).spotID, ...
+                                    '_longROImask.tif'];
+                                maskFile = fullfile(maskFolder, maskName);
+                                
+                                imwrite(baselineRoiMask(:,:,iSpot), maskFile);
+                                
                             end
                         end
                     end
@@ -302,35 +313,38 @@ classdef ImagingSession < handle
                 configMeasureIn = ConfigMeasureROIsClsfy();
                 configCSIn = ConfigCellScan(configFindIn, configMeasureIn);
                 
+                tempCS = {};
+                counter = 1;
                 for i = 1:numel(paths)
                     fileList = dir(fullfile(paths{i}, pattern));
-                    %refImgList = dir(fullfile(paths{i}, 'highres*'));
                     filePaths = fullfile(paths{i}, {fileList.name});
-                    %refImgPath = fullfile(paths{i}, {refImgList.name});
-                    
-                    tempImgData = SCIM_Tif(filePaths, channels, ...
-                        calibration);
-                    tempImgData = tempImgData.motion_correct(...
-                        'refImg', spotRefImg);
                     
                     % Find the current condition
                     if any(strfind(paths{i}, 'TrimSpareStim'))
-                        name = 'TrimSpareStim';
+                        %name = 'TrimSpareStim';
+                        continue
                     elseif any(strfind(paths{i}, 'TrimStim'))
                         name = 'TrimStim';
                     elseif any(strfind(paths{i}, 'TrimNostim'))
                         name = 'TrimNostim';
                     end
                     
-                    tempCS{i} = CellScan(name, tempImgData, ...
+                    tempImgData = SCIM_Tif(filePaths, channels, ...
+                        calibration);
+                    tempImgData = tempImgData.motion_correct(...
+                        'refImg', spotRefImg);
+                    
+                    tempCS{counter} = CellScan(name, tempImgData, ...
                         configCSIn, 1);
+                    counter = counter+1;
                 end
                 
-                tempImgGroup = ImgGroup('Conditions');
-                tempImgGroup.add(tempCS);
-                
-                self.imaging(iSpot).data = tempImgGroup;
-                
+                if ~isempty(tempCS)
+                    tempImgGroup = ImgGroup('Conditions');
+                    tempImgGroup.add(tempCS);
+                    
+                    self.imaging(iSpot).data = tempImgGroup;
+                end
             end
             
         end

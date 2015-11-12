@@ -91,7 +91,7 @@ dataTable = table();
 for iAnimal = 1:numel(AnimalNames)
     
     savepath = fullfile(ExperimentFolder, AnimalNames{iAnimal}, ...
-        '151111_ResultsTable_automated.mat');
+        '151110_ResultsTable_automated.mat');
     load(savepath)
     
     Animal = repmat(AnimalNames(iAnimal), size(dataTableTemp, 1), 1);
@@ -102,4 +102,4 @@ for iAnimal = 1:numel(AnimalNames)
 end
 
 writetable(newTable, fullfile(ExperimentFolder, 'Results', ...
-    '151111_control_animals_sessions_automated.csv'), 'Delimiter', ',');
+    '151110_control_animals_sessions_automated.csv'), 'Delimiter', ',');

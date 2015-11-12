@@ -69,7 +69,7 @@ classdef Animal < AnimalGroup
             end
             
             % Parse arguments
-            [refImg, useHandROI, ROIFolder] = utils.parse_opt_args({[]}, varargin);
+            [refImg, useHandROI, ROIFolder] = utils.parse_opt_args({[], [], []}, varargin);
             
             % Read scoresheet
             [~, ~, data] = xlsread(self.scoresheetPath, '', '', 'basic');
@@ -95,11 +95,11 @@ classdef Animal < AnimalGroup
             end
 
             % Parse arguments
-            [nBaseSessions, useParallel, useHandROI] = ...
-                utils.parse_opt_args({1, true}, varargin);
+            [nBaseSessions, useParallel, useHandROI, ExperimentFolder] = ...
+                utils.parse_opt_args({1, true, 0, []}, varargin);
             
             % Call Processing of ImgGroup
-            self.sessionImg.process(nBaseSessions, useParallel, useHandROI)
+            self.sessionImg.process(nBaseSessions, useParallel, useHandROI, ExperimentFolder)
             
             % TODO: Add some verification here
             self.state = 'processed';
